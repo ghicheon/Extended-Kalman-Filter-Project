@@ -32,47 +32,81 @@ FusionEKF::FusionEKF() {
         0, 0.0009, 0,
         0, 0, 0.09;
 
+
   /**
   TODO:
     * Finish initializing the FusionEKF.
     * Set the process and measurement noises
   */
 
-//void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
-//                        MatrixXd &H_in, MatrixXd &R_in, MatrixXd &Q_in) {
+   H_laser_  << 1,0,0,0,
+             0,1,0,0;
+
+   ekf_.P_ = MatrixXd(4, 4);
+   ekf_.P_ << 1, 0, 0, 0,
+              0, 1, 0, 0,
+              0, 0, 1000, 0,
+              0, 0, 0, 1000;
+   
+   ekf_.F_ =  MatrixXd(4, 4);
+   ekf_.F_  << 1, 0, 1, 0,
+               0, 1, 0, 1,
+               0, 0, 1, 0,
+               0, 0, 0, 1;
+
+
+   //noise_ax = 9;
+   //noise_ay = 9;
+
 
 
   VectorXd xx = VectorXd(4);
-  MatrixXd PP = MatrixXd(4, 4);
-  PP << 1, 0, 0, 0,
-        0, 1, 0, 0,
-        0, 0, 1000, 0,
-        0, 0, 0, 1000;
+  xx << 1,1,1,1;
 
-  MatrixXd FF = MatrixXd(4, 4);
+
+  MatrixXd PP = MatrixXd(4, 4);
+   PP << 1, 0, 0, 0,
+              0, 1, 0, 0,
+              0, 0, 1000, 0,
+              0, 0, 0, 1000;
+  MatrixXd FF =  MatrixXd(4, 4);
   FF << 1, 0, 1, 0,
         0, 1, 0, 1,
         0, 0, 1, 0,
         0, 0, 0, 1;
-
-
   MatrixXd HH = MatrixXd(2, 4);
-  HH  << 1, 0, 0, 0,
-         0, 1, 0, 0;
-
   MatrixXd RR = MatrixXd(2, 2);
-  RR << 0.0225, 0,
-        0, 0.0225;
-
-
   MatrixXd QQ = MatrixXd(4, 4);
-//  QQ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
-//         0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
-//         dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
-//         0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
-//
   ekf_.Init( xx, PP, FF,HH,RR,QQ);
 
+
+
+//
+//  MatrixXd PP = MatrixXd(4, 4);
+//  PP << 1, 0, 0, 0,
+//        0, 1, 0, 0,
+//        0, 0, 1000, 0,
+//        0, 0, 0, 1000;
+//
+//  MatrixXd FF = MatrixXd(4, 4);
+//  FF << 1, 0, 1, 0,
+//        0, 1, 0, 1,
+//        0, 0, 1, 0,
+//        0, 0, 0, 1;
+//
+//
+//  MatrixXd HH = MatrixXd(2, 4);
+//  HH  << 1, 0, 0, 0,
+//         0, 1, 0, 0;
+//
+//  MatrixXd RR = MatrixXd(2, 2);
+//  RR << 0.0225, 0,
+//        0, 0.0225;
+//
+//
+//
+//  MatrixXd QQ = MatrixXd(4, 4);
+//  ekf_.Init( xx, PP, FF,HH,RR,QQ);
 }
 
 /**
@@ -83,8 +117,6 @@ FusionEKF::~FusionEKF() {}
 
 
 void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
-
-
   /*****************************************************************************
    *  Initialization
    ****************************************************************************/
@@ -127,6 +159,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
     previous_timestamp_ = measurement_pack.timestamp_;
 
+   //done it already!
+   //ekf_.F_  << 1, 0, 1, 0,
+   //            0, 1, 0, 1,
+   //            0, 0, 1, 0,
+   //            0, 0, 0, 1;
+
     // done initializing, no need to predict or update
     is_initialized_ = true;
     return;
@@ -161,9 +199,9 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
    //set the process covariance matrix Q
    ekf_.Q_ = MatrixXd(4, 4);
    ekf_.Q_ <<  dt_4/4*noise_ax, 0, dt_3/2*noise_ax, 0,
-                       0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
-                       dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
-                       0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
+               0, dt_4/4*noise_ay, 0, dt_3/2*noise_ay,
+               dt_3/2*noise_ax, 0, dt_2*noise_ax, 0,
+               0, dt_3/2*noise_ay, 0, dt_2*noise_ay;
 
   ekf_.Predict();
 
@@ -179,16 +217,15 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
   if (measurement_pack.sensor_type_ == MeasurementPackage::RADAR) {
 
-    //Hj_ = tools.CalculateJacobian(ekf_.x_);
-    //ekf_.H_ = Hj_;
-
     ekf_.R_ = R_radar_;
     ekf_.UpdateEKF(measurement_pack.raw_measurements_);
     // Radar updates
   } else {
-    ekf_.R_ = R_laser_;
-    ekf_.Update(measurement_pack.raw_measurements_);
     // Laser updates
+
+    ekf_.R_ = R_laser_;
+    ekf_.H_ = H_laser_;
+    ekf_.Update(measurement_pack.raw_measurements_);
   }
 
   // print the output

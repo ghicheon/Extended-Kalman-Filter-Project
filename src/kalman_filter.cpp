@@ -76,15 +76,15 @@ VectorXd h( VectorXd &x)
     if( (px*px+py*py) != 0 )
         v(2) = (px*vx + py*vy)/sqrt(px*px+py*py);
 
-while( v(1) < -3.14 )
-{
-    v(1) += 3.14;
-}
-
-while( v(1) > 3.14 )
-{
-    v(1) -= 3.14;
-}
+    while( v(1) < -3.14 )
+    {
+        v(1) += 3.14;
+    }
+    
+    while( v(1) > 3.14 )
+    {
+        v(1) -= 3.14;
+    }
 
     return v;
 }
@@ -98,20 +98,19 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   Tools tools;
   MatrixXd Hj = tools.CalculateJacobian(x_);
 
-  //VectorXd z_pred = Hj*x_;
   VectorXd z_pred = h(x_);
   VectorXd y = z - z_pred;
-while( y(1) < -3.14 )
-{
-    printf("YYYYYYYYYYYYYYYYYYYYYYY-   %f\n", y(1));
-    y(1) += 3.14;
-}
-
-while( y(1) > 3.14 )
-{
-    printf("YYYYYYYYYYYYYYYYYYYYYYY+        %f\n", y(1));
-    y(1) -= 3.14;
-}
+  while( y(1) < -3.14 )
+  {
+      printf("YYYYYYYYYYYYYYYYYYYYYYY-   %f\n", y(1));
+      y(1) += 3.14;
+  }
+  
+  while( y(1) > 3.14 )
+  {
+      printf("YYYYYYYYYYYYYYYYYYYYYYY+        %f\n", y(1));
+      y(1) -= 3.14;
+  }
 
 
   MatrixXd Hjt = Hj.transpose();
