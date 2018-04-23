@@ -61,20 +61,44 @@ void KalmanFilter::Update(const VectorXd &z) {
 //cartition -> polar
 VectorXd h( VectorXd &x) 
 {
+}
+
+
+void KalmanFilter::UpdateEKF(const VectorXd &z) {
+  /**
+  TODO:
+    * update the state by using Extended Kalman Filter equations
+  */
+
+//#define MIN   0.000001
+//  if( x_(0) < MIN )
+//        x_(0) = MIN;
+//
+//  if( x_(1) < MIN )
+//        x_(1) = MIN;
+//
+//
+
+  Tools tools;
+
     VectorXd v = VectorXd(3);
 
-    int px = x(0);
-    int py = x(1);
-    int vx = x(2);
-    int vy = x(3);
+    int px = x_(0);
+    int py = x_(1);
+    int vx = x_(2);
+    int vy = x_(3);
 
     v(0) = sqrt(px*px+py*py);
 
-    if( px != 0 )
-        v(1) = atan2(py,px);
+    if( px == 0 )
+       return;
 
-    if( (px*px+py*py) != 0 )
-        v(2) = (px*vx + py*vy)/sqrt(px*px+py*py);
+    v(1) = atan2(py,px);
+
+    if( (px*px+py*py) == 0 )
+        return ;
+
+    v(2) = (px*vx + py*vy)/sqrt(px*px+py*py);
 
     while( v(1) < -3.14 )
     {
@@ -86,21 +110,11 @@ VectorXd h( VectorXd &x)
         v(1) -= 3.14;
     }
 
-    return v;
-}
-
-
-void KalmanFilter::UpdateEKF(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Extended Kalman Filter equations
-  */
-  Tools tools;
-  MatrixXd Hj = tools.CalculateJacobian(x_);
-
-  VectorXd z_pred = h(x_);
+  VectorXd z_pred = v;
   VectorXd y = z - z_pred;
-  while( y(1) < -3.14 )
+
+ y(1) = atan2(sin(y(1)), cos(y(1)));//nomalize
+  while( y(1) < -3.14159265358979323846 )
   {
       printf("YYYYYYYYYYYYYYYYYYYYYYY-   %f\n", y(1));
       y(1) += 3.14;
@@ -113,17 +127,17 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   }
 
 
-  MatrixXd Hjt = Hj.transpose();
-  MatrixXd S = Hj * P_ * Hjt + R_;
+  MatrixXd Ht = H_.transpose();
+  MatrixXd S = H_ * P_ * Ht + R_;
   MatrixXd Si = S.inverse();
-  MatrixXd PHjt = P_ * Hjt;
-  MatrixXd K = PHjt * Si;
+  MatrixXd PHt = P_ * Ht;
+  MatrixXd K = PHt * Si;
 
   //new estimate
   x_ = x_ + (K * y);
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
-  P_ = (I - K * Hj) * P_;
+  P_ = (I - K * H_) * P_;
 
 
 }
