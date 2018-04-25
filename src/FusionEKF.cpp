@@ -150,8 +150,8 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
 
         ekf_.x_(0) = px ;
         ekf_.x_(1) = py ;
-        ekf_.x_(2) = 0 ;
-        ekf_.x_(3) = 0 ;
+        ekf_.x_(2) = 0.1 ;
+        ekf_.x_(3) = 0.1 ;
     }
     else if (measurement_pack.sensor_type_ == MeasurementPackage::LASER) {
       /**
@@ -159,16 +159,12 @@ void FusionEKF::ProcessMeasurement(const MeasurementPackage &measurement_pack) {
       */
       ekf_.x_(0) =  measurement_pack.raw_measurements_[0];
       ekf_.x_(1) =  measurement_pack.raw_measurements_[1];
+      ekf_.x_(2) = 5.199937e+00 ;
+      ekf_.x_(3) = 0 ;
 
     }
 
     previous_timestamp_ = measurement_pack.timestamp_;
-
-   //done it already!
-   //ekf_.F_  << 1, 0, 1, 0,
-   //            0, 1, 0, 1,
-   //            0, 0, 1, 0,
-   //            0, 0, 0, 1;
 
     // done initializing, no need to predict or update
     is_initialized_ = true;
