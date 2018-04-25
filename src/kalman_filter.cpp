@@ -90,12 +90,12 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
 
     v(0) = sqrt(px*px+py*py);
 
-    if( px == 0 )
+    if( px > -0.0001  ||  px < 0.0001)
        return;
 
     v(1) = atan2(py,px);
 
-    if( (px*px+py*py) == 0 )
+    if( sqrt(px*px+py*py) > -0.0001 || sqrt(px*px+py*py) < 0.0001  )
         return ;
 
     v(2) = (px*vx + py*vy)/sqrt(px*px+py*py);
@@ -114,7 +114,7 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   VectorXd y = z - z_pred;
 
  y(1) = atan2(sin(y(1)), cos(y(1)));//nomalize
-  while( y(1) < -3.14159265358979323846 )
+  while( y(1) < -3.14 )
   {
       printf("YYYYYYYYYYYYYYYYYYYYYYY-   %f\n", y(1));
       y(1) += 3.14;
