@@ -5,8 +5,9 @@
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
 
-// Please note that the Eigen library does not initialize 
-// VectorXd or MatrixXd objects with zeros upon creation.
+
+#define A_LITTLE_BIT 0.00001
+#define PI   3.141592
 
 KalmanFilter::KalmanFilter() {}
 
@@ -23,10 +24,9 @@ void KalmanFilter::Init(VectorXd &x_in, MatrixXd &P_in, MatrixXd &F_in,
 }
 
 void KalmanFilter::Predict() {
-  /**
-  TODO:
-    * predict the state
-  */
+  /*
+   * predict the state
+   */
   x_ = F_ * x_;
   MatrixXd Ft = F_.transpose();
   P_ = F_ * P_ * Ft + Q_;
@@ -34,10 +34,9 @@ void KalmanFilter::Predict() {
 }
 
 void KalmanFilter::Update(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Kalman Filter equations
-  */
+  /*
+   * update the state by using Kalman Filter equations
+   */
   VectorXd z_pred = H_ * x_;
   VectorXd y = z - z_pred;
   MatrixXd Ht = H_.transpose();
@@ -54,15 +53,10 @@ void KalmanFilter::Update(const VectorXd &z) {
 }
 
 
-
-
-
-
 //cartition -> polar
 VectorXd h( VectorXd &x) 
 {
     VectorXd v = VectorXd(3);
-
     float px = x(0);
     float py = x(1);
     float vx = x(2);
@@ -70,47 +64,35 @@ VectorXd h( VectorXd &x)
 
     v(0) = sqrt(px*px+py*py);
 
-    v(1) = 0.00001;
+    v(1) = A_LITTLE_BIT; //when the denominator px == 0
     if( px != 0 )
         v(1) = atan2(py,px);
 
-    v(2) = 0.00001;
-    if((px*px+py*py) != 0)
+    v(2) = A_LITTLE_BIT;
+    if((px*px+py*py) != 0) //when the denominator is 0
         v(2) = (px*vx + py*vy)/sqrt(px*px+py*py);
 
-    while( v(1) < -3.14 ) v(1) += 3.14;
-    
-    while( v(1) > 3.14 ) v(1) -= 3.14;
+    //normalize the angle. Must be PI <= the angle <= PI
+    while( v(1) < -PI ) v(1) += PI;
+    while( v(1) > PI ) v(1) -= PI;
 
     return v;
 }
 
 
 void KalmanFilter::UpdateEKF(const VectorXd &z) {
-  /**
-  TODO:
-    * update the state by using Extended Kalman Filter equations
-  */
+  /*
+   * update the state by using Extended Kalman Filter equations
+   */
 
   Tools tools;
 
   VectorXd z_pred = h(x_);
   VectorXd y = z - z_pred;
 
- y(1) = atan2(sin(y(1)), cos(y(1)));//nomalize
-
-  while( y(1) < -3.14 )
-  {
-      printf("YYYYYYYYYYYYYYYYYYYYYYY-   %f\n", y(1));
-      y(1) += 3.14;
-  }
-  
-  while( y(1) > 3.14 )
-  {
-      printf("YYYYYYYYYYYYYYYYYYYYYYY+        %f\n", y(1));
-      y(1) -= 3.14;
-  }
-
+  //normalize the angle
+  while( y(1) < -PI ) y(1) += PI;
+  while( y(1) > PI ) y(1) -= PI;
 
   MatrixXd Ht = H_.transpose();
   MatrixXd S = H_ * P_ * Ht + R_;
@@ -123,7 +105,4 @@ void KalmanFilter::UpdateEKF(const VectorXd &z) {
   long x_size = x_.size();
   MatrixXd I = MatrixXd::Identity(x_size, x_size);
   P_ = (I - K * H_) * P_;
-
-
-
 }
